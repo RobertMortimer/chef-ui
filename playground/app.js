@@ -448,7 +448,7 @@ class App extends Component {
               <img src={logo} alt={'LOGO'} style={{height: 50, width: 50}}/>
             </div>
             <div className="col-sm-8">
-              <h1>JSON Data Driver</h1>
+              <h1>JSON Forms</h1>
             </div>
             </div>
           <div className="row">
