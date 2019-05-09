@@ -1,6 +1,7 @@
 const path = require("path");
 const express = require("express");
 const webpack = require("webpack");
+require("fs")
 
 const server = process.env.RJSF_DEV_SERVER || "localhost:8080";
 const splitServer = server.split(":");

@@ -6,6 +6,7 @@ import "codemirror/mode/javascript/javascript";
 import { shouldRender } from "../src/utils";
 import { samples } from "./samples";
 import Form from "../src";
+import logo from '../logo.png';
 
 // Import a few CodeMirror themes; these are used to match alternative
 // bootstrap ones.
@@ -245,22 +246,27 @@ class Selector extends Component {
     };
   };
 
+  onSelectHandle = event => {
+    event.preventDefault();
+    const selectedIndex = event.target.selectedIndex;
+    const label = event.target[selectedIndex].text;
+    this.setState({ current: label });
+    setImmediate(() => this.props.onSelected(samples[label]));
+  }
+
   render() {
     return (
-      <ul className="nav nav-pills">
+      <select className="form-control" onChange={this.onSelectHandle}>
         {Object.keys(samples).map((label, i) => {
           return (
-            <li
+            <option
               key={i}
               role="presentation"
-              className={this.state.current === label ? "active" : ""}>
-              <a href="#" onClick={this.onLabelClick(label)}>
-                {label}
-              </a>
-            </li>
+              className={this.state.current === label ? "active" : ""}>{label}
+            </option>
           );
         })}
-      </ul>
+      </select>
     );
   }
 }
@@ -356,6 +362,7 @@ class App extends Component {
 
   load = data => {
     // Reset the ArrayFieldTemplate whenever you load new data
+    console.log(data)
     const { ArrayFieldTemplate, ObjectFieldTemplate } = data;
     // uiSchema is missing on some examples. Provide a default to
     // clear the field in all cases.
@@ -404,6 +411,21 @@ class App extends Component {
     }
   };
 
+  downloadFile = async () => {
+    const {formData} = this.state; // I am assuming that "this.state.myData"// is an object and I wrote it to file as
+                                 // json
+    const fileName = "form-data";
+    const json = toJson(formData);
+    const blob = new Blob([json],{type:'application/json'});
+    const href = await URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = fileName + ".json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   render() {
     const {
       schema,
@@ -421,7 +443,14 @@ class App extends Component {
     return (
       <div className="container-fluid">
         <div className="page-header">
-          <h1>react-jsonschema-form</h1>
+          <div className="row">
+            <div className="col-sm-2">
+              <img src={logo} alt={'LOGO'} style={{height: 50, width: 50}}/>
+            </div>
+            <div className="col-sm-8">
+              <h1>JSON Data Driver</h1>
+            </div>
+            </div>
           <div className="row">
             <div className="col-sm-8">
               <Selector onSelected={this.load} />
@@ -496,7 +525,10 @@ class App extends Component {
                     Submit
                   </button>
                 </div>
-                <div className="col-sm-9 text-right">
+                <div className="col-sm-3">
+                  <button className={"btn btn-primary"} onClick={this.downloadFile} >Download</button>
+                </div>
+                <div className="col-sm-3 text-right">
                   <CopyLink
                     shareURL={this.state.shareURL}
                     onShare={this.onShare}

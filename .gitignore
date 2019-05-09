@@ -115,7 +115,6 @@ $RECYCLE.BIN/
 
 # Package specific files
 
-build
 _build
 site
 dist

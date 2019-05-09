@@ -48,6 +48,15 @@ module.exports = {
           path.join(__dirname, "node_modules", "babel-runtime"),
         ],
       },
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {},
+          },
+        ],
+      },
     ]
   }
 };
