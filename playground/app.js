@@ -231,7 +231,7 @@ class Editor extends Component {
 class Selector extends Component {
   constructor(props) {
     super(props);
-    this.state = { current: "Simple" };
+    this.state = { current: props.schemaName };
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -255,12 +255,15 @@ class Selector extends Component {
   }
 
   render() {
+    const { schemaName } = this.props;
+    const selectedValue = Object.keys(samples).indexOf(schemaName);
     return (
-      <select className="form-control" onChange={this.onSelectHandle}>
+      <select className="form-control" onChange={this.onSelectHandle} value={selectedValue}>
         {Object.keys(samples).map((label, i) => {
           return (
             <option
               key={i}
+              value={i}
               role="presentation"
               className={this.state.current === label ? "active" : ""}>{label}
             </option>
@@ -362,7 +365,6 @@ class App extends Component {
 
   load = data => {
     // Reset the ArrayFieldTemplate whenever you load new data
-    console.log(data)
     const { ArrayFieldTemplate, ObjectFieldTemplate } = data;
     // uiSchema is missing on some examples. Provide a default to
     // clear the field in all cases.
@@ -453,7 +455,7 @@ class App extends Component {
             </div>
           <div className="row">
             <div className="col-sm-8">
-              <Selector onSelected={this.load} />
+              <Selector onSelected={this.load} schemaName={schema.name} />
             </div>
             <div className="col-sm-2">
               <Form

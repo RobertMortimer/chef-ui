@@ -23,7 +23,7 @@ import additionalProperties from "./additionalProperties";
 import nullable from "./nullable";
 import nullField from "./null";
 
-export const samples = {
+const samples_ = {
   Simple: simple,
   Nested: nested,
   Arrays: arrays,
@@ -49,3 +49,10 @@ export const samples = {
   "Null fields": nullField,
   Nullable: nullable,
 };
+
+// add the name to the schema
+Object.keys(samples_).forEach(k => {
+  samples_[k].schema.name = k;
+})
+
+export const samples = samples_;
