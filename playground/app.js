@@ -7,7 +7,6 @@ import { shouldRender } from "../src/utils";
 import { samples } from "./samples";
 import Form from "../src";
 import logo from '../logo.png';
-
 // Import a few CodeMirror themes; these are used to match alternative
 // bootstrap ones.
 import "codemirror/lib/codemirror.css";
@@ -289,6 +288,22 @@ function ThemeSelector({ theme, select }) {
   );
 }
 
+const UploadButton = ({ handleFile }) =>
+  <label className="btn btn-primary"
+         style={{
+           position: 'relative',
+           overflow: 'hidden' }}>
+    Upload <input type="file"
+                  accept={ 'application/json,.json' }
+                  onChange={ e => this.handleFile(e.target.files[0]) }
+                  hidden
+                  style={{
+                    opacity: 0,
+                    position: 'absolute',
+                    right: 0,
+                    top: 0 }} />
+  </label>;
+
 class CopyLink extends Component {
   onCopyClick = event => {
     this.input.select();
@@ -414,10 +429,10 @@ class App extends Component {
   };
 
   downloadFile = async () => {
-    const { formData } = this.state;
+    const { formData, schema } = this.state;
     const fileName = "form-data";
-    const json = toJson(formData);
-    const blob = new Blob([json],{type:'application/json'});
+    const json = toJson({ schema_name: schema.name, data: formData });
+    const blob = new Blob([json],{ type:'application/json' });
     const href = await URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = href;
@@ -427,9 +442,45 @@ class App extends Component {
     document.body.removeChild(link);
   }
 
+  //TODO: fix clear form data method
   clearFormData = () => {
-
     this.setState({ formData: {} });
+  }
+
+  // processes uploaded json
+  handleFileProcessing = (event) => {
+    const content = event.target.result;
+    try {
+      const jsonResult = JSON.parse(content);
+      let { schema_name, data } = jsonResult;
+      // TODO: Pop-up window if schema not found?
+      if (!samples.hasOwnProperty(schema_name)) {
+        alert('Schema Not Found');
+        return;
+      }
+      if (schema_name && data) {
+        // TODO: simplify object construction
+        data = { ...samples[schema_name], ...{ formData: data } };
+        this.load(data);
+      }
+    }
+    // parsing error probably means not a valid json
+    catch (e) {
+      alert('The file is not a valid JSON File');
+    }
+  }
+
+
+  handleFile = (file) => {
+    // check for correct extension
+    if (file.type !== 'application/json') {
+      alert('The file needs to have a .json extension');
+      return;
+    }
+    // differ file processing to handleFileProcessing
+    const fileReader = new FileReader();
+    fileReader.onload = this.handleFileProcessing;
+    fileReader.readAsText(file);
   }
 
   render() {
@@ -451,7 +502,7 @@ class App extends Component {
         <div className="page-header">
           <div className="row">
             <div className="col-sm-2">
-              <img src={logo} alt={'LOGO'} style={{height: 50, width: 50}}/>
+              <img src={logo} alt={'LOGO'} style={{ height: 50, width: 50 }} />
             </div>
             <div className="col-sm-8">
               <h1>JSON Data Driver</h1>
@@ -526,18 +577,18 @@ class App extends Component {
               transformErrors={transformErrors}
               onError={log("errors")}>
               <div className="row">
-                <div className="col-sm-3">
-                  <button className="btn btn-primary" type="submit">
-                    Submit
-                  </button>
+                <div className="col-xs-4 col-sm-4">
+                  <UploadButton handleFile={this.handleFile} />
                 </div>
-                <div className="col-sm-3">
+                <div className="col-xs-4 col-sm-4 text-center">
                   <button className={"btn btn-primary"} onClick={this.downloadFile} >Download</button>
                 </div>
-                <div className="col-sm-3 text-right">
+                <div className="col-xs-4 col-sm-4 text-right">
                   <button className={"btn btn-warning"} onClick={this.clearFormData}>Clear</button>
                 </div>
-                <div className="col-sm-3 text-right">
+              </div>
+              <div className={'row'}>
+                <div className="col-xs-12 col-sm-12 text-right">
                   <CopyLink
                     shareURL={this.state.shareURL}
                     onShare={this.onShare}
