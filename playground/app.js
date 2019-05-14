@@ -414,8 +414,7 @@ class App extends Component {
   };
 
   downloadFile = async () => {
-    const {formData} = this.state; // I am assuming that "this.state.myData"// is an object and I wrote it to file as
-                                 // json
+    const { formData } = this.state;
     const fileName = "form-data";
     const json = toJson(formData);
     const blob = new Blob([json],{type:'application/json'});
@@ -426,6 +425,11 @@ class App extends Component {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  clearFormData = () => {
+
+    this.setState({ formData: {} });
   }
 
   render() {
@@ -450,7 +454,7 @@ class App extends Component {
               <img src={logo} alt={'LOGO'} style={{height: 50, width: 50}}/>
             </div>
             <div className="col-sm-8">
-              <h1>JSON Forms</h1>
+              <h1>JSON Data Driver</h1>
             </div>
             </div>
           <div className="row">
@@ -529,6 +533,9 @@ class App extends Component {
                 </div>
                 <div className="col-sm-3">
                   <button className={"btn btn-primary"} onClick={this.downloadFile} >Download</button>
+                </div>
+                <div className="col-sm-3 text-right">
+                  <button className={"btn btn-warning"} onClick={this.clearFormData}>Clear</button>
                 </div>
                 <div className="col-sm-3 text-right">
                   <CopyLink
