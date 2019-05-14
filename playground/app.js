@@ -295,7 +295,7 @@ const UploadButton = ({ handleFile }) =>
            overflow: 'hidden' }}>
     Upload <input type="file"
                   accept={ 'application/json,.json' }
-                  onChange={ e => this.handleFile(e.target.files[0]) }
+                  onChange={ e => handleFile(e.target.files[0]) }
                   hidden
                   style={{
                     opacity: 0,
@@ -461,6 +461,7 @@ class App extends Component {
       if (schema_name && data) {
         // TODO: simplify object construction
         data = { ...samples[schema_name], ...{ formData: data } };
+        console.log(data);
         this.load(data);
       }
     }
