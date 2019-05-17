@@ -4,7 +4,7 @@ import { UnControlled as CodeMirror } from "react-codemirror2";
 import "codemirror/mode/javascript/javascript";
 
 import { shouldRender } from "../src/utils";
-import { samples } from "./samples";
+// import { samples } from "./samples";
 import Form from "../src";
 import logo from '../logo.png';
 // Import a few CodeMirror themes; these are used to match alternative
@@ -238,6 +238,7 @@ class Selector extends Component {
   }
 
   onLabelClick = label => {
+    const {samples} = this.props;
     return event => {
       event.preventDefault();
       this.setState({ current: label });
@@ -246,6 +247,7 @@ class Selector extends Component {
   };
 
   onSelectHandle = event => {
+    const {samples} = this.props
     event.preventDefault();
     const selectedIndex = event.target.selectedIndex;
     const label = event.target[selectedIndex].text;
@@ -254,7 +256,7 @@ class Selector extends Component {
   }
 
   render() {
-    const { schemaName } = this.props;
+    const { schemaName, samples } = this.props;
     const selectedValue = Object.keys(samples).indexOf(schemaName);
     return (
       <select className="form-control" onChange={this.onSelectHandle} value={selectedValue}>
@@ -344,7 +346,8 @@ class App extends Component {
   constructor(props) {
     super(props);
     // initialize state with Simple data sample
-    const { schema, uiSchema, formData, validate } = samples.Simple;
+    const {samples, defaultSchema} = this.props;
+    const { schema, uiSchema, formData, validate } = samples[defaultSchema];
     this.state = {
       form: false,
       schema,
@@ -362,6 +365,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    const {samples} = this.props;
     const hash = document.location.hash.match(/#(.*)/);
     if (hash && typeof hash[1] === "string" && hash[1].length > 0) {
       try {
@@ -370,7 +374,7 @@ class App extends Component {
         alert("Unable to load form setup data.");
       }
     } else {
-      this.load(samples.Simple);
+      this.load(samples[defaultSchema]);
     }
   }
 
@@ -449,6 +453,7 @@ class App extends Component {
 
   // processes uploaded json
   handleFileProcessing = (event) => {
+    const {samples} = this.props;
     const content = event.target.result;
     try {
       const jsonResult = JSON.parse(content);
@@ -485,6 +490,7 @@ class App extends Component {
   }
 
   render() {
+    const {samples} = this.props;
     const {
       schema,
       uiSchema,
@@ -511,7 +517,11 @@ class App extends Component {
             </div>
           <div className="row">
             <div className="col-sm-8">
-              <Selector onSelected={this.load} schemaName={schema.name} />
+              <Selector onSelected={this.load}
+                        schemaName={schema.name}
+                        samples={samples}
+
+              />
             </div>
             <div className="col-sm-2">
               <Form
@@ -604,4 +614,5 @@ class App extends Component {
   }
 }
 
-render(<App />, document.getElementById("app"));
+render(<App samples={window.schemas} defaultSchema={window.defaultSchema}/>,
+  document.getElementById("app"));
