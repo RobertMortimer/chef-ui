@@ -4,9 +4,8 @@ import { UnControlled as CodeMirror } from "react-codemirror2";
 import "codemirror/mode/javascript/javascript";
 
 import { shouldRender } from "../src/utils";
-// import { samples } from "./samples";
 import Form from "../src";
-import logo from '../logo.png';
+import logo from "../logo.png";
 // Import a few CodeMirror themes; these are used to match alternative
 // bootstrap ones.
 import "codemirror/lib/codemirror.css";
@@ -17,6 +16,7 @@ import "codemirror/theme/ttcn.css";
 import "codemirror/theme/solarized.css";
 import "codemirror/theme/monokai.css";
 import "codemirror/theme/eclipse.css";
+import { processSchemas, getInitialFormData } from "./utils";
 
 const log = type => console.log.bind(console, type);
 const fromJson = json => JSON.parse(json);
@@ -24,9 +24,8 @@ const toJson = val => JSON.stringify(val, null, 2);
 const liveSettingsSchema = {
   type: "object",
   properties: {
-    validate: { type: "boolean", title: "Live validation" },
-    disable: { type: "boolean", title: "Disable whole form" },
-  },
+    validate: { type: "boolean", title: "Live validation" }
+  }
 };
 const cmOptions = {
   theme: "default",
@@ -238,7 +237,7 @@ class Selector extends Component {
   }
 
   onLabelClick = label => {
-    const {samples} = this.props;
+    const { samples } = this.props;
     return event => {
       event.preventDefault();
       this.setState({ current: label });
@@ -247,26 +246,31 @@ class Selector extends Component {
   };
 
   onSelectHandle = event => {
-    const {samples} = this.props
+    const { samples } = this.props;
     event.preventDefault();
     const selectedIndex = event.target.selectedIndex;
     const label = event.target[selectedIndex].text;
     this.setState({ current: label });
     setImmediate(() => this.props.onSelected(samples[label]));
-  }
+  };
 
   render() {
     const { schemaName, samples } = this.props;
     const selectedValue = Object.keys(samples).indexOf(schemaName);
     return (
-      <select className="form-control" onChange={this.onSelectHandle} value={selectedValue}>
+      <select
+        className="form-control"
+        onChange={this.onSelectHandle}
+        value={selectedValue}
+        style={{ maxWidth: 720, marginBottom: 10, }}>
         {Object.keys(samples).map((label, i) => {
           return (
             <option
               key={i}
               value={i}
               role="presentation"
-              className={this.state.current === label ? "active" : ""}>{label}
+              className={this.state.current === label ? "active" : ""}>
+              {label}
             </option>
           );
         })}
@@ -291,20 +295,26 @@ function ThemeSelector({ theme, select }) {
 }
 
 const UploadButton = ({ handleFile }) =>
-  <label className="btn btn-primary"
-         style={{
-           position: 'relative',
-           overflow: 'hidden' }}>
-    Upload <input type="file"
-                  accept={ 'application/json,.json' }
-                  onChange={ e => handleFile(e.target.files[0]) }
-                  hidden
-                  style={{
-                    opacity: 0,
-                    position: 'absolute',
-                    right: 0,
-                    top: 0 }} />
-  </label>;
+  (<label
+    className="btn btn-primary"
+    style={{
+      position: "relative",
+      overflow: "hidden"
+    }}>
+    Upload{" "}
+    <input
+      type="file"
+      accept={"application/json,.json"}
+      onChange={e => handleFile(e.target.files[0])}
+      hidden
+      style={{
+        opacity: 0,
+        position: "absolute",
+        right: 0,
+        top: 0
+      }}
+    />
+  </label>);
 
 class CopyLink extends Component {
   onCopyClick = event => {
@@ -346,7 +356,10 @@ class App extends Component {
   constructor(props) {
     super(props);
     // initialize state with Simple data sample
-    const {samples, defaultSchema} = this.props;
+    let { samples, defaultSchema } = this.props;
+
+    defaultSchema = !!defaultSchema ? defaultSchema : Object.keys(samples)[0];
+    console.log(samples, defaultSchema);
     const { schema, uiSchema, formData, validate } = samples[defaultSchema];
     this.state = {
       form: false,
@@ -358,24 +371,17 @@ class App extends Component {
       theme: "default",
       liveSettings: {
         validate: true,
-        disable: false,
+        disable: false
       },
       shareURL: null,
+      schemaFound: true,
     };
   }
 
   componentDidMount() {
-    const {samples} = this.props;
-    const hash = document.location.hash.match(/#(.*)/);
-    if (hash && typeof hash[1] === "string" && hash[1].length > 0) {
-      try {
-        this.load(JSON.parse(atob(hash[1])));
-      } catch (err) {
-        alert("Unable to load form setup data.");
-      }
-    } else {
-      this.load(samples[defaultSchema]);
-    }
+    let { samples, defaultSchema } = this.props;
+    defaultSchema = !!defaultSchema ? defaultSchema : Object.keys(samples)[0];
+    this.load(samples[defaultSchema]);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -384,18 +390,26 @@ class App extends Component {
 
   load = data => {
     // Reset the ArrayFieldTemplate whenever you load new data
-    const { ArrayFieldTemplate, ObjectFieldTemplate } = data;
+    const { ArrayFieldTemplate = null, ObjectFieldTemplate = null } = data;
     // uiSchema is missing on some examples. Provide a default to
     // clear the field in all cases.
-    const { uiSchema = {} } = data;
+    let { formData, schemaFound } = this.state;
+    let { uiSchema = {}, schema } = data;
+    if (schemaFound) {
+      formData = getInitialFormData(schema);
+    }
     // force resetting form component instance
-    this.setState({ form: false }, _ =>
+    this.setState({
+      form: false,
+      formData }, _ =>
+
       this.setState({
         ...data,
         form: true,
+        formData,
         ArrayFieldTemplate,
         ObjectFieldTemplate,
-        uiSchema,
+        uiSchema
       })
     );
   };
@@ -416,8 +430,11 @@ class App extends Component {
 
   setLiveSettings = ({ formData }) => this.setState({ liveSettings: formData });
 
-  onFormDataChange = ({ formData }) =>
-    this.setState({ formData, shareURL: null });
+  onFormDataChange = ({ formData }) => {
+    if (this.state.schemaFound) {
+      this.setState({ formData, shareURL: null });
+    }
+  };
 
   onShare = () => {
     const { formData, schema, uiSchema } = this.state;
@@ -435,62 +452,85 @@ class App extends Component {
   downloadFile = async () => {
     const { formData, schema } = this.state;
     const fileName = "form-data";
-    const json = toJson({ schema_name: schema.name, data: formData });
-    const blob = new Blob([json],{ type:'application/json' });
+    const json = toJson({ schema_name: schema.schema_name, data: formData });
+    const blob = new Blob([json], { type: "application/json" });
     const href = await URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = href;
     link.download = fileName + ".json";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }
+  };
 
-  //TODO: fix clear form data method
+
   clearFormData = () => {
-    this.setState({ formData: {} });
-  }
+    const { schema } = this.state;
+    const formData = getInitialFormData(schema);
+    this.setState({ formData });
+  };
 
   // processes uploaded json
-  handleFileProcessing = (event) => {
-    const {samples} = this.props;
+  handleFileProcessing = event => {
+    const { samples } = this.props;
     const content = event.target.result;
     try {
       const jsonResult = JSON.parse(content);
       let { schema_name, data } = jsonResult;
-      // TODO: Pop-up window if schema not found?
-      if (!samples.hasOwnProperty(schema_name)) {
-        alert('Schema Not Found');
-        return;
-      }
-      if (schema_name && data) {
-        // TODO: simplify object construction
-        data = { ...samples[schema_name], ...{ formData: data } };
-        console.log(data);
+      if (!schema_name || !samples.hasOwnProperty(schema_name)) {
+        alert("Schema Not Found - Please select an appropriate schema");
+        data = !!data ? data : jsonResult;
+        const liveSettings = {
+          validate: false,
+          previous: this.state.liveSettings.validate
+        };
+        this.setState({ formData: data, schemaFound: false, liveSettings });
+      } else if (schema_name) {
+
+        const formData = !!data
+          ? data
+          : getInitialFormData(samples[schema_name]);
+        data = { ...samples[schema_name], ...{ formData } };
         this.load(data);
       }
+    } catch (e) {
+      // parsing error probably means not a valid json
+      alert("The file is not a valid JSON File");
     }
-    // parsing error probably means not a valid json
-    catch (e) {
-      alert('The file is not a valid JSON File');
-    }
-  }
+  };
 
-
-  handleFile = (file) => {
+  handleFile = file => {
     // check for correct extension
-    if (file.type !== 'application/json') {
-      alert('The file needs to have a .json extension');
+    if (file.type !== "application/json") {
+      alert("The file needs to have a .json extension");
       return;
     }
     // differ file processing to handleFileProcessing
     const fileReader = new FileReader();
     fileReader.onload = this.handleFileProcessing;
     fileReader.readAsText(file);
+  };
+
+  handleSchemaFound = e => {
+    const { liveSettings } = this.state;
+    this.setState({
+      schemaFound: true,
+      liveSettings: { ...liveSettings, ...{ validate: liveSettings.previous } }
+    });
+  };
+
+  handleSchemaCancel = e => {
+    const { schema, liveSettings } = this.state;
+    const formData = getInitialFormData(schema);
+    this.setState({
+      schemaFound: true,
+      liveSettings: { ...liveSettings, ...{ validate: liveSettings.previous } },
+      formData
+    });
   }
 
   render() {
-    const {samples} = this.props;
+    const { samples } = this.props;
     const {
       schema,
       uiSchema,
@@ -502,34 +542,51 @@ class App extends Component {
       ArrayFieldTemplate,
       ObjectFieldTemplate,
       transformErrors,
+      schemaFound,
     } = this.state;
 
     return (
       <div className="container-fluid">
-        <div className="page-header">
-          <div className="row">
+        <div className="page-header" style={{ marginTop: 5 }}>
+          <div
+            className="row"
+            style={{ display: "flex", alignItems: "center" }}>
             <div className="col-sm-2">
-              <img src={logo} alt={'LOGO'} style={{ height: 50, width: 50 }} />
+              <img src={logo} alt={"LOGO"} style={{ height: 50, width: 50 }} />
             </div>
             <div className="col-sm-8">
               <h1>JSON Data Driver</h1>
             </div>
-            </div>
+          </div>
           <div className="row">
             <div className="col-sm-8">
-              <Selector onSelected={this.load}
-                        schemaName={schema.name}
-                        samples={samples}
-
-              />
+              <Selector
+                onSelected={this.load}
+                schemaName={schema.schema_name}
+                samples={samples} />
             </div>
             <div className="col-sm-2">
-              <Form
-                schema={liveSettingsSchema}
-                formData={liveSettings}
-                onChange={this.setLiveSettings}>
-                <div />
-              </Form>
+              {schemaFound ? (
+                <Form
+                  schema={liveSettingsSchema}
+                  formData={liveSettings}
+                  onChange={this.setLiveSettings}>
+                  <div />
+                </Form> )
+                : ([
+                  <button
+                    className={"btn btn-primary"}
+                    style={ {marginBottom: 10, marginRight: 10} }
+                    onClick={this.handleSchemaFound}>
+                    Schema Found
+                  </button>,
+                  <button
+                    className={"btn btn-warning"}
+                    style={ {marginBottom: 10} }
+                    onClick={this.handleSchemaCancel}>
+                    Cancel
+                  </button>
+              ])}
             </div>
             <div className="col-sm-2">
               <ThemeSelector theme={theme} select={this.onThemeSelected} />
@@ -537,32 +594,6 @@ class App extends Component {
           </div>
         </div>
         <div className="col-sm-7">
-          <Editor
-            title="JSONSchema"
-            theme={editor}
-            code={toJson(schema)}
-            onChange={this.onSchemaEdited}
-          />
-          <div className="row">
-            <div className="col-sm-6">
-              <Editor
-                title="UISchema"
-                theme={editor}
-                code={toJson(uiSchema)}
-                onChange={this.onUISchemaEdited}
-              />
-            </div>
-            <div className="col-sm-6">
-              <Editor
-                title="formData"
-                theme={editor}
-                code={toJson(formData)}
-                onChange={this.onFormDataEdited}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="col-sm-5">
           {this.state.form && (
             <Form
               ArrayFieldTemplate={ArrayFieldTemplate}
@@ -587,32 +618,55 @@ class App extends Component {
               }
               transformErrors={transformErrors}
               onError={log("errors")}>
-              <div className="row">
+              <div
+                className="row"
+                style={{
+                  borderTop: "1px solid rgb(229, 229, 229)",
+                  paddingTop: 10
+                }}>
                 <div className="col-xs-4 col-sm-4">
                   <UploadButton handleFile={this.handleFile} />
                 </div>
                 <div className="col-xs-4 col-sm-4 text-center">
-                  <button className={"btn btn-primary"} onClick={this.downloadFile} >Download</button>
+                  <button
+                    className={"btn btn-primary"}
+                    onClick={this.downloadFile}>
+                    Download
+                  </button>
                 </div>
                 <div className="col-xs-4 col-sm-4 text-right">
-                  <button className={"btn btn-warning"} onClick={this.clearFormData}>Clear</button>
+                  <button
+                    className={"btn btn-warning"}
+                    onClick={this.clearFormData}>
+                    Clear
+                  </button>
                 </div>
               </div>
-              <div className={'row'}>
-                <div className="col-xs-12 col-sm-12 text-right">
-                  <CopyLink
-                    shareURL={this.state.shareURL}
-                    onShare={this.onShare}
-                  />
-                </div>
-              </div>
+              <div
+                className={"row"}
+                style={{ paddingTop: 10, paddingBottom: 10 }}
+              />
             </Form>
           )}
+        </div>
+        <div className="col-sm-5">
+          <Editor
+            title="formData"
+            theme={editor}
+            code={ toJson(formData) }
+            onChange={this.onFormDataEdited} />
         </div>
       </div>
     );
   }
 }
 
-render(<App samples={window.schemas} defaultSchema={window.defaultSchema}/>,
-  document.getElementById("app"));
+if (process.env.NODE_ENV === "production") {
+  render(
+    <App samples={window.schemas} defaultSchema={window.defaultSchema} />,
+    document.getElementById("app")
+  );
+} else {
+  const samples = processSchemas();
+  render(<App samples={samples} />, document.getElementById("app"));
+}

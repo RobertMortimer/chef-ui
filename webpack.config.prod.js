@@ -8,7 +8,7 @@ module.exports = {
   output: {
     path: path.join(__dirname, "build"),
     filename: "bundle.js",
-    publicPath: "/static/"
+    // publicPath: "/static/"
   },
   plugins: [
     new MiniCssExtractPlugin({filename: "styles.css", allChunks: true}),
@@ -53,7 +53,9 @@ module.exports = {
         use: [
           {
             loader: 'file-loader',
-            options: {},
+            options: {
+              outputPath: 'static',
+            },
           },
         ],
       },

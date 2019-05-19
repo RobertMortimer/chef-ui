@@ -8,7 +8,13 @@ const app = express();
 require("./middleware/file-watch")(app);
 const indexRouter = require("./routes/index")(app);
 
-app.use(logger("dev"));
+if (process.env.NODE_ENV === 'production') {
+  app.use(logger("dev"));
+}
+else {
+  app.use(logger("combined"));
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

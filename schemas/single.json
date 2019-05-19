@@ -1,0 +1,5 @@
+{
+  "schema_name": "Single",
+  "title": "A single-field form",
+  "type": "string"
+}

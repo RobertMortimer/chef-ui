@@ -25,7 +25,6 @@ module.exports = app => {
   });
 
   app.locals.schemas = schemas;
-  console.log(app.locals.schemas);
 
   const fileChange = dir => path => {
     console.log("File Changed:", path);

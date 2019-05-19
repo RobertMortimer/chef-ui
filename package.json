@@ -17,6 +17,7 @@
     "preversion": "npm run build:playground && npm run dist && npm run cs-check && npm run lint",
     "start": "node devServer.js",
     "start-server": "node src/server/bin/www",
+    "run": "cross-env NODE_ENV=production PORT=80 src/server/bin/www",
     "tdd": "cross-env NODE_ENV=test mocha --require babel-register --watch --require ./test/setup-jsdom.js test/**/*_test.js",
     "test": "cross-env NODE_ENV=test mocha --require babel-register --require ./test/setup-jsdom.js test/**/*_test.js",
     "test-coverage": "cross-env NODE_ENV=test nyc --reporter=lcov mocha --require babel-register --require ./test/setup-jsdom.js test/**/*_test.js",
