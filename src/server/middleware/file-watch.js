@@ -5,6 +5,7 @@
 const chokidar = require("chokidar");
 const namer = require("../utils/name");
 const fs = require("fs");
+const path = require("path");
 
 module.exports = app => {
   const schemaFiles = fs.readdirSync("./schemas");
@@ -37,11 +38,11 @@ module.exports = app => {
     }
   };
 
-  const fileAdded = dir => path => {
-    console.log("File Added:", path);
-    const name = namer.readName(path.split("\\")[1]);
+  const fileAdded = dir => file => {
+    console.log("File Added:", file);
+    const name = namer.readName(file.split(path.sep)[1]);
     try {
-      const data = JSON.parse(fs.readFileSync(path));
+      const data = JSON.parse(fs.readFileSync(file));
       if (app.locals.schemas.hasOwnProperty(name)) {
         app.locals.schemas[name][dir] = data;
       } else {
@@ -52,9 +53,9 @@ module.exports = app => {
     }
   };
 
-  const fileRemoved = dir => path => {
-    console.log("File Removed:", path);
-    const name = namer.readName(path.split("\\")[1]);
+  const fileRemoved = dir => file => {
+    console.log("File Removed:", file);
+    const name = namer.readName(file.split(path.sep)[1]);
     delete app.locals.schemas[name][dir];
     if (!Object.keys(app.locals.schemas[name]).length) {
       delete app.locals.schemas[name];
