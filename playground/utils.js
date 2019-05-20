@@ -41,34 +41,35 @@ export const processSchemas = () => {
   return samples;
 };
 
-export const getInitialFormData = schema => {
+export const getInitialFormData = (schema, required=[], key) => {
   if (schema) {
     if (!schema.hasOwnProperty("type")) {
-      return ""
+      return undefined
     }
-
-    switch (schema.type.toLowerCase()) {
-      case "object":
-        let obj = {};
-        Object.entries(schema.properties).forEach(([k, v]) => {
-          obj[k] = getInitialFormData(v);
-        });
-        return obj;
-      case "string":
-        if (schema.format && schema.format === 'data-url') {
+    if (Array.isArray(schema.type)) return undefined;
+    else {
+      switch (schema.type.toLowerCase()) {
+        case "object":
+          let obj = {};
+          Object.entries(schema.properties).forEach(([k, v]) => {
+            obj[k] = getInitialFormData(v);
+          });
+          return obj;
+        case "array":
+          if (schema.hasOwnProperty('default')
+            || schema.hasOwnProperty('minList')
+          ) {
+            return [];
+          }
           return undefined;
-        }
-        return "";
-      case "number":
-        return undefined;
-      case "integer":
-        return undefined;
-      case "boolean":
-        return null;
-      case "array":
-        return [];
+        default:
+          if (schema.hasOwnProperty('default')) {
+            return null;
+          }
+          return undefined;
+      }
     }
   } else {
-    return {}
+    return undefined
   }
 };

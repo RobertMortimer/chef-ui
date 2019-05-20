@@ -34,6 +34,7 @@ export default class Form extends Component {
       this.props.onChange(this.state);
     }
     this.formElement = null;
+    this.validate = this.validate.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {

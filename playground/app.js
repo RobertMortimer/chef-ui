@@ -6,6 +6,7 @@ import "codemirror/mode/javascript/javascript";
 import { shouldRender } from "../src/utils";
 import Form from "../src";
 import logo from "../logo.png";
+import "react-bootstrap-modal/lib/css/rbm-patch.css";
 // Import a few CodeMirror themes; these are used to match alternative
 // bootstrap ones.
 import "codemirror/lib/codemirror.css";
@@ -16,7 +17,8 @@ import "codemirror/theme/ttcn.css";
 import "codemirror/theme/solarized.css";
 import "codemirror/theme/monokai.css";
 import "codemirror/theme/eclipse.css";
-import { processSchemas, getInitialFormData } from "./utils";
+import { getInitialFormData, processSchemas } from "./utils";
+import ModalButton from "./Modal";
 
 const log = type => console.log.bind(console, type);
 const fromJson = json => JSON.parse(json);
@@ -370,11 +372,12 @@ class App extends Component {
       editor: "default",
       theme: "default",
       liveSettings: {
-        validate: true,
+        validate: false,
         disable: false
       },
       shareURL: null,
       schemaFound: true,
+      download: false
     };
   }
 
@@ -388,15 +391,17 @@ class App extends Component {
     return shouldRender(this, nextProps, nextState);
   }
 
-  load = data => {
+  load = (data, userData) => {
     // Reset the ArrayFieldTemplate whenever you load new data
     const { ArrayFieldTemplate = null, ObjectFieldTemplate = null } = data;
     // uiSchema is missing on some examples. Provide a default to
-    // clear the field in all cases.
+
     let { formData, schemaFound } = this.state;
-    let { uiSchema = {}, schema } = data;
-    if (schemaFound) {
-      formData = getInitialFormData(schema);
+    let { uiSchema = {} } = data;
+    if (userData) {
+      formData = userData;
+    } else if (schemaFound) {
+      formData = {};
     }
     // force resetting form component instance
     this.setState({
@@ -449,20 +454,65 @@ class App extends Component {
     }
   };
 
-  downloadFile = async () => {
-    const { formData, schema } = this.state;
-    const fileName = "form-data";
-    const json = toJson({ schema_name: schema.schema_name, data: formData });
-    const blob = new Blob([json], { type: "application/json" });
-    const href = await URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = href;
-    link.download = fileName + ".json";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // creates a modal button if there are errors. otherwise downloads formData
+  renderDownloadModal = () => {
+    const { download, formData } = this.state;
+
+    if (!download) return;
+    const { errors } = this.form.validate(formData);
+
+    // create a modal button
+    if (errors.length) {
+      return (
+        <ModalButton
+          title={"You have errors in your form"}
+          description={"Please validate your form data before downloading"}
+          cancelText={"Okay"}
+          onCancel={this.toggleDownloadState}
+        >
+          <button
+            className="btn btn-primary"
+            onClick={this.toggleDownloadState}
+          >
+            Okay
+          </button>
+          <button className="btn btn-warning" onClick={this.downloadFile}>
+            Download Anyway
+          </button>
+        </ModalButton>
+      );
+    } else {
+      this.downloadFile();
+    }
   };
 
+  downloadFile = async e => {
+    const { formData, schema } = this.state;
+    this.setState({ download: false }, async _ => {
+      const fileName = "form-data";
+      const json = toJson({ schema_name: schema.schema_name, data: formData });
+      const blob = new Blob([json], { type: "application/json" });
+      const href = await URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = fileName + ".json";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  };
+
+  // change the download state
+  toggleDownloadState = e => {
+    const { download, liveSettings } = this.state;
+    let state = { download: !download };
+
+    // download canceled - show live validation
+    if (download && !liveSettings.validate) {
+      state.liveSettings = { ...liveSettings, validate: true };
+    }
+    this.setState(state);
+  };
 
   clearFormData = () => {
     const { schema } = this.state;
@@ -476,22 +526,21 @@ class App extends Component {
     const content = event.target.result;
     try {
       const jsonResult = JSON.parse(content);
-      let { schema_name, data } = jsonResult;
+      let { schema_name, data, ...rest } = jsonResult;
       if (!schema_name || !samples.hasOwnProperty(schema_name)) {
         alert("Schema Not Found - Please select an appropriate schema");
-        data = !!data ? data : jsonResult;
+        data = !!data ? data : rest;
         const liveSettings = {
           validate: false,
           previous: this.state.liveSettings.validate
         };
         this.setState({ formData: data, schemaFound: false, liveSettings });
       } else if (schema_name) {
-
-        const formData = !!data
-          ? data
-          : getInitialFormData(samples[schema_name]);
-        data = { ...samples[schema_name], ...{ formData } };
-        this.load(data);
+        let formData;
+        if (data) formData = data;
+        else if (rest) formData = data;
+        else formData = {};
+        this.load(samples[schema_name], formData);
       }
     } catch (e) {
       // parsing error probably means not a valid json
@@ -527,7 +576,7 @@ class App extends Component {
       liveSettings: { ...liveSettings, ...{ validate: liveSettings.previous } },
       formData
     });
-  }
+  };
 
   render() {
     const { samples } = this.props;
@@ -542,15 +591,19 @@ class App extends Component {
       ArrayFieldTemplate,
       ObjectFieldTemplate,
       transformErrors,
-      schemaFound,
+      schemaFound
     } = this.state;
+
+    console.log("render", this.state);
 
     return (
       <div className="container-fluid">
+        {this.renderDownloadModal()}
         <div className="page-header" style={{ marginTop: 5 }}>
           <div
             className="row"
-            style={{ display: "flex", alignItems: "center" }}>
+            style={{ display: "flex", alignItems: "center" }}
+          >
             <div className="col-sm-2">
               <img src={logo} alt={"LOGO"} style={{ height: 50, width: 50 }} />
             </div>
@@ -563,30 +616,36 @@ class App extends Component {
               <Selector
                 onSelected={this.load}
                 schemaName={schema.schema_name}
-                samples={samples} />
+                samples={samples}
+              />
             </div>
             <div className="col-sm-2">
               {schemaFound ? (
                 <Form
                   schema={liveSettingsSchema}
                   formData={liveSettings}
-                  onChange={this.setLiveSettings}>
+                  onChange={this.setLiveSettings}
+                >
                   <div />
-                </Form> )
-                : ([
+                </Form>
+              ) : (
+                [
                   <button
                     className={"btn btn-primary"}
-                    style={ {marginBottom: 10, marginRight: 10} }
-                    onClick={this.handleSchemaFound}>
+                    style={{ marginBottom: 10, marginRight: 10 }}
+                    onClick={this.handleSchemaFound}
+                  >
                     Schema Found
                   </button>,
                   <button
                     className={"btn btn-warning"}
-                    style={ {marginBottom: 10} }
-                    onClick={this.handleSchemaCancel}>
+                    style={{ marginBottom: 10 }}
+                    onClick={this.handleSchemaCancel}
+                  >
                     Cancel
                   </button>
-              ])}
+                ]
+              )}
             </div>
             <div className="col-sm-2">
               <ThemeSelector theme={theme} select={this.onThemeSelected} />
@@ -617,27 +676,32 @@ class App extends Component {
                 console.log(`Focused ${id} with value ${value}`)
               }
               transformErrors={transformErrors}
-              onError={log("errors")}>
+              ref={node => (this.form = node)}
+              onError={errors => console.log("Errors:", errors)}
+            >
               <div
                 className="row"
                 style={{
                   borderTop: "1px solid rgb(229, 229, 229)",
                   paddingTop: 10
-                }}>
+                }}
+              >
                 <div className="col-xs-4 col-sm-4">
                   <UploadButton handleFile={this.handleFile} />
                 </div>
                 <div className="col-xs-4 col-sm-4 text-center">
                   <button
                     className={"btn btn-primary"}
-                    onClick={this.downloadFile}>
+                    onClick={this.toggleDownloadState}
+                  >
                     Download
                   </button>
                 </div>
                 <div className="col-xs-4 col-sm-4 text-right">
                   <button
                     className={"btn btn-warning"}
-                    onClick={this.clearFormData}>
+                    onClick={this.clearFormData}
+                  >
                     Clear
                   </button>
                 </div>
@@ -653,20 +717,24 @@ class App extends Component {
           <Editor
             title="formData"
             theme={editor}
-            code={ toJson(formData) }
-            onChange={this.onFormDataEdited} />
+            code={toJson(formData)}
+            onChange={this.onFormDataEdited}
+          />
         </div>
       </div>
     );
   }
 }
 
+// in production node.js will supply the schema data
 if (process.env.NODE_ENV === "production") {
   render(
     <App samples={window.schemas} defaultSchema={window.defaultSchema} />,
     document.getElementById("app")
   );
-} else {
+}
+// in development webpack will dynamically import all the schema
+else {
   const samples = processSchemas();
   render(<App samples={samples} />, document.getElementById("app"));
 }
