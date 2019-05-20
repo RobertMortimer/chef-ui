@@ -612,14 +612,15 @@ class App extends Component {
             </div>
           </div>
           <div className="row">
-            <div className="col-sm-8">
+            <div className="col-lg-2 col-md-1"/>
+            <div className="col-sm-8 col-md-8 col-lg-6">
               <Selector
                 onSelected={this.load}
                 schemaName={schema.schema_name}
                 samples={samples}
               />
             </div>
-            <div className="col-sm-2">
+            <div className="col-sm-2 col-md-2">
               {schemaFound ? (
                 <Form
                   schema={liveSettingsSchema}
@@ -647,12 +648,10 @@ class App extends Component {
                 ]
               )}
             </div>
-            <div className="col-sm-2">
-              <ThemeSelector theme={theme} select={this.onThemeSelected} />
-            </div>
           </div>
         </div>
-        <div className="col-sm-7">
+        <div className="col-md-1 col-lg-2 col-xl-3"/>
+        <div className="col-md-10 col-lg-8 col-xl-6">
           {this.state.form && (
             <Form
               ArrayFieldTemplate={ArrayFieldTemplate}
@@ -712,14 +711,6 @@ class App extends Component {
               />
             </Form>
           )}
-        </div>
-        <div className="col-sm-5">
-          <Editor
-            title="formData"
-            theme={editor}
-            code={toJson(formData)}
-            onChange={this.onFormDataEdited}
-          />
         </div>
       </div>
     );
