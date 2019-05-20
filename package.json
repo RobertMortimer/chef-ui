@@ -1,6 +1,6 @@
 {
   "name": "json-data-driver",
-  "version": "0.1",
+  "version": "1.5.0",
   "description": "A React page for keeping forms generated from schemas",
   "scripts": {
     "build:lib": "rimraf lib && cross-env NODE_ENV=production babel -d lib/ src/",
