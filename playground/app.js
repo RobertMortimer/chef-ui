@@ -5,7 +5,7 @@ import "codemirror/mode/javascript/javascript";
 
 import { shouldRender } from "../src/utils";
 import Form from "../src";
-import logo from "../logo.png";
+import logo from "./logo.png";
 import "react-bootstrap-modal/lib/css/rbm-patch.css";
 // Import a few CodeMirror themes; these are used to match alternative
 // bootstrap ones.
@@ -19,6 +19,8 @@ import "codemirror/theme/monokai.css";
 import "codemirror/theme/eclipse.css";
 import { getInitialFormData, processSchemas } from "./utils";
 import ModalButton from "./Modal";
+import themes from "./themes";
+import config from './config';
 
 const log = type => console.log.bind(console, type);
 const fromJson = json => JSON.parse(json);
@@ -30,7 +32,7 @@ const liveSettingsSchema = {
   }
 };
 const cmOptions = {
-  theme: "default",
+  theme: config.theme,
   height: "auto",
   viewportMargin: Infinity,
   mode: {
@@ -43,94 +45,7 @@ const cmOptions = {
   indentWithTabs: false,
   tabSize: 2,
 };
-const themes = {
-  default: {
-    stylesheet:
-      "//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css",
-  },
-  cerulean: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/cerulean/bootstrap.min.css",
-  },
-  cosmo: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/cosmo/bootstrap.min.css",
-  },
-  cyborg: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/cyborg/bootstrap.min.css",
-    editor: "blackboard",
-  },
-  darkly: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/darkly/bootstrap.min.css",
-    editor: "mbo",
-  },
-  flatly: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/flatly/bootstrap.min.css",
-    editor: "ttcn",
-  },
-  journal: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/journal/bootstrap.min.css",
-  },
-  lumen: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/lumen/bootstrap.min.css",
-  },
-  paper: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/paper/bootstrap.min.css",
-  },
-  readable: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/readable/bootstrap.min.css",
-  },
-  sandstone: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/sandstone/bootstrap.min.css",
-    editor: "solarized",
-  },
-  simplex: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/simplex/bootstrap.min.css",
-    editor: "ttcn",
-  },
-  slate: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/slate/bootstrap.min.css",
-    editor: "monokai",
-  },
-  spacelab: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/spacelab/bootstrap.min.css",
-  },
-  "solarized-dark": {
-    stylesheet:
-      "//cdn.rawgit.com/aalpern/bootstrap-solarized/master/bootstrap-solarized-dark.css",
-    editor: "dracula",
-  },
-  "solarized-light": {
-    stylesheet:
-      "//cdn.rawgit.com/aalpern/bootstrap-solarized/master/bootstrap-solarized-light.css",
-    editor: "solarized",
-  },
-  superhero: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/superhero/bootstrap.min.css",
-    editor: "dracula",
-  },
-  united: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/united/bootstrap.min.css",
-  },
-  yeti: {
-    stylesheet:
-      "//cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/yeti/bootstrap.min.css",
-    editor: "eclipse",
-  },
-};
+
 
 class GeoPosition extends Component {
   constructor(props) {
@@ -238,14 +153,6 @@ class Selector extends Component {
     return shouldRender(this, nextProps, nextState);
   }
 
-  onLabelClick = label => {
-    const { samples } = this.props;
-    return event => {
-      event.preventDefault();
-      this.setState({ current: label });
-      setImmediate(() => this.props.onSelected(samples[label]));
-    };
-  };
 
   onSelectHandle = event => {
     const { samples } = this.props;
@@ -369,8 +276,6 @@ class App extends Component {
       uiSchema,
       formData,
       validate,
-      editor: "default",
-      theme: "default",
       liveSettings: {
         validate: false,
         disable: false
@@ -384,6 +289,7 @@ class App extends Component {
   componentDidMount() {
     let { samples, defaultSchema } = this.props;
     defaultSchema = !!defaultSchema ? defaultSchema : Object.keys(samples)[0];
+    document.getElementById("theme").setAttribute("href", themes[config.theme].stylesheet);
     this.load(samples[defaultSchema]);
   }
 
