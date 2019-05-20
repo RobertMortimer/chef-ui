@@ -6,7 +6,7 @@ import "codemirror/mode/javascript/javascript";
 import { shouldRender } from "../src/utils";
 import Form from "../src";
 import logo from "./logo.png";
-import "react-bootstrap-modal/lib/css/rbm-patch.css";
+// import "react-bootstrap-modal/lib/css/rbm-patch.css";
 // Import a few CodeMirror themes; these are used to match alternative
 // bootstrap ones.
 import "codemirror/lib/codemirror.css";
