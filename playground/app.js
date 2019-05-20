@@ -500,8 +500,6 @@ class App extends Component {
       schemaFound
     } = this.state;
 
-    console.log("render", this.state);
-
     return (
       <div className="container-fluid">
         {this.renderDownloadModal()}
