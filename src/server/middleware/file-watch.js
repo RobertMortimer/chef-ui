@@ -27,11 +27,11 @@ module.exports = app => {
 
   app.locals.schemas = schemas;
 
-  const fileChange = dir => path => {
-    console.log("File Changed:", path);
-    const name = namer.readName(path.split("\\")[1]);
+  const fileChange = dir => file => {
+    console.log("File Changed:", file);
+    const name = namer.readName(file.split(path.sep)[1]);
     try {
-      const data = JSON.parse(fs.readFileSync(path));
+      const data = JSON.parse(fs.readFileSync(file));
       app.locals.schemas[name][dir] = data;
     } catch (e) {
       console.error("Error in Reading Changed File:", e);
