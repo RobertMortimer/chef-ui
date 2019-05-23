@@ -17,7 +17,7 @@ import "codemirror/theme/ttcn.css";
 import "codemirror/theme/solarized.css";
 import "codemirror/theme/monokai.css";
 import "codemirror/theme/eclipse.css";
-import { getInitialFormData, processSchemas } from "./utils";
+import { getDefaultFormData, getInitialFormData, processSchemas } from "./utils";
 import ModalButton from "./Modal";
 import themes from "./themes";
 import config from './config';
@@ -282,7 +282,8 @@ class App extends Component {
       },
       shareURL: null,
       schemaFound: true,
-      download: false
+      download: false,
+      schema_name: defaultSchema,
     };
   }
 
@@ -303,11 +304,11 @@ class App extends Component {
     // uiSchema is missing on some examples. Provide a default to
 
     let { formData, schemaFound } = this.state;
-    let { uiSchema = {} } = data;
+    let { uiSchema = {}, schema = { type: 'object' } } = data;
     if (userData) {
       formData = userData;
     } else if (schemaFound) {
-      formData = {};
+      formData = getDefaultFormData(schema);
     }
     // force resetting form component instance
     this.setState({
@@ -497,7 +498,8 @@ class App extends Component {
       ArrayFieldTemplate,
       ObjectFieldTemplate,
       transformErrors,
-      schemaFound
+      schemaFound,
+      schema_name,
     } = this.state;
 
     return (
@@ -520,7 +522,7 @@ class App extends Component {
             <div className="col-sm-8 col-md-8 col-lg-6">
               <Selector
                 onSelected={this.load}
-                schemaName={schema.schema_name}
+                schemaName={schema_name}
                 samples={samples}
               />
             </div>

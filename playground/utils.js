@@ -1,12 +1,5 @@
-const readName = path => {
-  return path
-    .split("/")
-    .slice(-1)[0]
-    .replace(".json", "")
-    .split("_")
-    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(" ");
-};
+const namer = require('../src/server/utils/name');
+const readName = file => namer.fileToSchema(namer.getFileName(file));
 
 const importAll = r => {
   const keys = r.keys().map(k => readName(k));
@@ -30,10 +23,9 @@ export const processSchemas = () => {
       key = schema.schema_name;
     } else {
       key = k;
-      schema.schema_name = k;
     }
 
-    samples[key] = { schema };
+    samples[key] = { schema, schema_name: key };
     if (uiSchemas.hasOwnProperty(k)) {
       samples[key].uiSchema = uiSchemas[k];
     }
@@ -41,7 +33,11 @@ export const processSchemas = () => {
   return samples;
 };
 
-export const getInitialFormData = (schema, required=[], key) => {
+export const getDefaultFormData = (schema) => {
+  if (schema.type.toLowerCase === 'object') return {};
+}
+
+export const getInitialFormData = (schema) => {
   if (schema) {
     if (!schema.hasOwnProperty("type")) {
       return undefined
