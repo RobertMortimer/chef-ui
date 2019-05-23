@@ -394,10 +394,10 @@ class App extends Component {
   };
 
   downloadFile = async e => {
-    const { formData, schema } = this.state;
+    const { formData, schema_name } = this.state;
     this.setState({ download: false }, async _ => {
       const fileName = "form-data";
-      const json = toJson({ schema_name: schema.schema_name, data: formData });
+      const json = toJson({ schema_name, data: formData });
       const blob = new Blob([json], { type: "application/json" });
       const href = await URL.createObjectURL(blob);
       const link = document.createElement("a");
