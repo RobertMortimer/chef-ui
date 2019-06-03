@@ -4,6 +4,8 @@ JSON Data Driver
 A fork of [react-json-form](https://mozilla-services.github.io/react-jsonschema-form/).
 Most of the project is built upon the library
 
+[Demo](https://json-driver.netlify.com/)
+
 ## Changes from React JSON Form
 - Removed code editors that display Schema, UI Schema and Form Data
 - Changed Schemas from JS to JSON
